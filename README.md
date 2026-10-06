@@ -6,26 +6,8 @@
 
 ---
 
-## 📂 Структура репозитория
 
-```text
-k8s-config-rbac-homework/
-├── .gitignore
-├── README.md
-├── task1/
-│   ├── configmap-web.yaml
-│   └── deployment.yaml
-├── task2/
-│   ├── secret-tls.yaml
-│   └── ingress-tls.yaml
-└── task3/
-    ├── role-pod-reader.yaml
-    └── rolebinding-developer.yaml
-```
-
----
-
-## 🛠 Задание 1: Работа с ConfigMaps
+## Задание 1: Работа с ConfigMaps
 
 ### Исходные файлы:
 * Манифест ConfigMap: [task1/configmap-web.yaml](task1/configmap-web.yaml)
@@ -41,11 +23,11 @@ k8s-config-rbac-homework/
 ```bash
 kubectl exec -it deployment/web-app -c multitool -- curl http://localhost:80
 ```
-*Вставьте сюда скриншот вывода команды curl с кодом HTML-страницы приветствия*
+![alt text](img/image.png)
 
 ---
 
-## 🔐 Задание 2: Настройка HTTPS с Secrets
+## Задание 2: Настройка HTTPS с Secrets
 
 ### Исходные файлы:
 * Манифест секретов: [task2/secret-tls.yaml](task2/secret-tls.yaml)
@@ -54,14 +36,14 @@ kubectl exec -it deployment/web-app -c multitool -- curl http://localhost:80
 ### Команды генерации сертификатов:
 ```bash
 # 1. Генерация самоподписанного SSL-сертификата и ключа для домена (в одну строчку для Bash)
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj '/CN=://example.com'
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj '/CN=myapp.example.com'
 
 # 2. Автоматическая сборка K8s Secret манифеста из полученных файлов сертификата
 kubectl create secret tls myapp-tls-secret --key tls.key --cert tls.crt --dry-run=client -o yaml > task2/secret-tls.yaml
 ```
 
 ### Описание решения:
-1. Сгенерирован самоподписанный SSL-сертификат для домена `://example.com`. На его основе создан объект `Secret` типа `kubernetes.io/tls`.
+1. Сгенерирован самоподписанный SSL-сертификат для домена `myapp.example.com`. На его основе создан объект `Secret` типа `kubernetes.io/tls`.
 2. Деплоймент `web-app` опубликован наружу кластера с помощью сервиса `web-app-svc` на порту 80.
 3. Настроен Ingress-маршрутизатор `myapp-ingress-tls` (класс `nginx`), использующий созданный секрет для терминации SSL-трафика.
 4. Доступ к защищенному порту на локальной хост-машине обеспечен через проброс портов: `sudo microk8s kubectl port-forward -n ingress-nginx deployment/ingress-nginx-controller 443:443`.
@@ -69,13 +51,13 @@ kubectl create secret tls myapp-tls-secret --key tls.key --cert tls.crt --dry-ru
 ### Проверка работоспособности:
 Запрос выполнен с локальной машины по протоколу HTTPS с игнорированием самоподписанного статуса сертификата (`-k`) и подменой заголовка `Host`:
 ```bash
-curl -k -H "Host: ://example.com" https://localhost:443
+curl -k -H "Host: myapp.example.com" https://localhost:443
 ```
-*Вставьте сюда скриншот успешного curl -k ответа через 443 порт*
+![alt text](img/image-1.png)
 
 ---
 
-## 🎛 Задание 3: Настройка RBAC
+## Задание 3: Настройка RBAC
 
 ### Исходные файлы:
 * Манифест роли: [task3/role-pod-reader.yaml](task3/role-pod-reader.yaml)
@@ -105,10 +87,10 @@ sudo openssl x509 -req -in developer.csr -CA /var/snap/microk8s/current/certs/ca
 ```bash
 kubectl get pods --as=developer
 ```
-*Вставьте сюда скриншот успешного вывода списка подов от имени разработчика*
+![alt text](img/image-2.png)
 
 **2. Проверка запрещенной операции (Просмотр списка сетевых сервисов):**
 ```bash
 kubectl get svc --as=developer
 ```
-*Вставьте сюда скриншот с ошибкой доступа Error from server (Forbidden): services is forbidden...*
+![alt text](img/image-3.png)
